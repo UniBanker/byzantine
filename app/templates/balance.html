@@ -1,0 +1,33 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+<body>
+        <div id="cover">
+        <form method="get" action="">
+            <div class="tb">
+            <div class="td"><input type="text" placeholder="Search" required></div>
+            <div class="td" id="s-cover">
+                <button type="submit">
+                <div id="s-circle"></div>
+                <span></span>
+                </button>
+            </div>
+            </div>
+        </form>
+        </div>
+
+    <table class="container">
+        <th>Block Number</th>
+        <th>Amount BLUE</th>
+        <th>Amount BYZ</th>
+        {%for event in events%}
+            <tr>
+            <td><a href="https://etherscan.io/block/{{event.blockNum}}">{{event.blockNum}}</a></td>
+            <td>{{event.blueAmt}}</td>
+            <td>{{event.byzAmt}}</td>
+            </tr>
+        {%endfor%}
+        <tr>
+            <td>Total</td><td>{{blueTotal}}</td><td>{{byzTotal}}</td>
+        </tr>
+    </table>
+
+</body>
