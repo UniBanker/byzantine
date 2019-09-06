@@ -3,3 +3,4 @@ _pycache_
 __pycache__
 eth.db
 app/eth.db
+app/__pycache__/
