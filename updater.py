@@ -3,6 +3,8 @@ from app import model
 
 abi = '''[{"constant":true,"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"balances","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"jetTokens","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSwapped","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"uint256","name":"tokens","type":"uint256"},{"internalType":"string","name":"btcAddress","type":"string"}],"name":"deposit","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"from","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"totalSwapped","type":"uint256"},{"indexed":false,"internalType":"string","name":"btcAddress","type":"string"}],"name":"DidSwap","type":"event"}]'''
 
+rewardDropBlock1 = 8493120
+
 class Updater:
     def __init__(self):
         provider = Web3.HTTPProvider("https://mainnet.infura.io:443")
@@ -15,10 +17,23 @@ class Updater:
         return events
     def allEvents(self):
         return self.contract.events.DidSwap.getLogs(fromBlock=0, toBlock='latest')
+    def rewardAt(self, height):
+        if(height < rewardDropBlock1):
+            return 5
+        return 4
 
 if __name__ == "__main__":
     model.db.connect()
-    model.db.create_tables([model.Event])
+    model.db.create_tables([model.Event, model.Wallet])
+    '''wallet_query = model.Wallet.select().where(model.Wallet.byzAddress == 'BYZ3AwzghzPjTwgztn5AHiWNRFokA19rkmWav')
+    print(len(wallet_query))
+    print(wallet_query.first().totalByz)
+    wallet_update = model.Wallet.update(totalByz = wallet_query.first().totalByz+1).execute()
+    wallet_query = model.Wallet.select().where(model.Wallet.byzAddress == 'BYZ3AwzghzPjTwgztn5AHiWNRFokA19rkmWav')
+    print(wallet_query.first().totalByz)
+    print(wallet_update)
+    exit(0)'''
+
     u = Updater()
     events = model.Event.all()
     if len(events) > 0:
@@ -29,14 +44,42 @@ if __name__ == "__main__":
         events = u.allEvents()
     for e in events:
         try:
-            print('ADDING RECORD...')
-            print(e)
+            # print('ADDING RECORD...')
+            # print(e)
+            byzAddress = e.args.btcAddress
+            amt = e.args.amount
+            ethAddress = e.args['from']
             model.Event.create(
-            byzAddress=e.args.btcAddress,
+            byzAddress=byzAddress,
             blockNum=e.blockNumber,
-            amt=e.args.amount,
-            ethAddress=e.args['from'],
+            amt=amt,
+            ethAddress=ethAddress,
             totalSwapped=e.args.totalSwapped
             )
-        except:
+        except Exception as e:
+            print('Event exception')
+            print(e)
             pass
+        try:
+            # Create or get wallet owned by this user
+            wallet_query = model.Wallet.select().where(model.Wallet.byzAddress == byzAddress)
+            reward = u.rewardAt(e.blockNumber)
+            if(len(wallet_query) < 1):
+                # Create new wallet
+                model.Wallet.create(
+                    byzAddress=byzAddress,
+                    ethAddress=ethAddress,
+                    balance=reward
+                )
+            else:
+                # Adding to existing amount
+                print(f"Add {reward} to {wallet_query.first().balance} on {byzAddress}")
+                print(f"{len(wallet_query)} matching wallet entries found")
+                model.Wallet.update(
+                    balance = wallet_query.first().balance + reward
+                ).where(model.Wallet.byzAddress == byzAddress).execute()
+        except Exception as e:
+            print('Wallet exception')
+            print(e)
+            pass
+#main

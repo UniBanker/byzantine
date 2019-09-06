@@ -13,6 +13,11 @@ def to_array(result):
         arr.append(r)
     return arr
 
+class Wallet(BaseModel):
+    ethAddress = CharField(unique=True)
+    balance = IntegerField()
+    byzAddress = CharField(unique=True)
+
 class Event(BaseModel):
     blockNum = IntegerField()
     amt = CharField()
