@@ -1,7 +1,8 @@
 from flask import Flask, escape, request, render_template
 from functools import reduce
-from model import Event
+from model import Event, Wallet, SwapCfg
 import json
+from playhouse.shortcuts import model_to_dict
 
 app = Flask(__name__)
 
@@ -31,10 +32,24 @@ def index(search):
     return render_template('balance.html', events = res, blueTotal = blueTotal, byzTotal = byzTotal)
 
 # API
-@app.route('/api/allEventData')
-def all_event_data():
-    print(f"{len(Event.all())}")
-    r = []
-    for evt in Event.all().dicts():
-        r.append(evt)
-    return json.dumps(r)
+@app.route('/api/allEvents')
+def all_events():
+    return json.dumps(list(map(model_to_dict, Event.all())))
+
+@app.route('/api/allWallets')
+def all_wallets():
+    return json.dumps(list(map(model_to_dict, Wallet.all())))
+
+@app.route('/api/wallet/<address>')
+def wallet_detail(address):
+    wallets = Wallet.find_by_byz_address(address)
+    events_raw = Event.find_by_byz_address(address)
+    def addRewardRatio(evt):
+        evt_dict = model_to_dict(evt)
+        evt_dict['rewardRatio'] = int(SwapCfg.reward_at_height(evt_dict['blockNum']) / 1e8)
+        return evt_dict
+    events = map(addRewardRatio, events_raw)
+    return json.dumps({
+        'wallet': list(map(model_to_dict, wallets)),
+        'history': list(events)
+    })

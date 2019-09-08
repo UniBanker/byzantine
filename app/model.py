@@ -13,10 +13,24 @@ def to_array(result):
         arr.append(r)
     return arr
 
+rewardDropBlock1 = 8493120
+class SwapCfg():
+    @classmethod
+    def reward_at_height(self, height):
+        if(height < rewardDropBlock1):
+            return 5 * 1e8
+        return 4 * 1e8
+
 class Wallet(BaseModel):
     ethAddress = CharField(unique=True)
     balance = IntegerField()
     byzAddress = CharField(unique=True)
+    @classmethod
+    def all(self):
+        return self.select()
+    @classmethod
+    def find_by_byz_address(self, byzAddress):
+        return to_array(self.select().where(Wallet.byzAddress % byzAddress))
 
 class Event(BaseModel):
     blockNum = IntegerField()

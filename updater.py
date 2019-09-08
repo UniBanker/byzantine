@@ -17,10 +17,6 @@ class Updater:
         return events
     def allEvents(self):
         return self.contract.events.DidSwap.getLogs(fromBlock=0, toBlock='latest')
-    def rewardAt(self, height):
-        if(height < rewardDropBlock1):
-            return 5
-        return 4
 
 if __name__ == "__main__":
     model.db.connect()
@@ -44,8 +40,6 @@ if __name__ == "__main__":
         events = u.allEvents()
     for e in events:
         try:
-            # print('ADDING RECORD...')
-            # print(e)
             byzAddress = e.args.btcAddress
             amt = e.args.amount
             ethAddress = e.args['from']
@@ -63,7 +57,7 @@ if __name__ == "__main__":
         try:
             # Create or get wallet owned by this user
             wallet_query = model.Wallet.select().where(model.Wallet.byzAddress == byzAddress)
-            reward = u.rewardAt(e.blockNumber)
+            reward = model.SwapCfg.reward_at_height(e.blockNumber)
             if(len(wallet_query) < 1):
                 # Create new wallet
                 model.Wallet.create(
@@ -73,8 +67,6 @@ if __name__ == "__main__":
                 )
             else:
                 # Adding to existing amount
-                print(f"Add {reward} to {wallet_query.first().balance} on {byzAddress}")
-                print(f"{len(wallet_query)} matching wallet entries found")
                 model.Wallet.update(
                     balance = wallet_query.first().balance + reward
                 ).where(model.Wallet.byzAddress == byzAddress).execute()
@@ -82,4 +74,3 @@ if __name__ == "__main__":
             print('Wallet exception')
             print(e)
             pass
-#main
