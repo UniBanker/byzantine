@@ -16,17 +16,16 @@ def hello():
 @app.route('/<search>')
 def index(search):
     res = Event.find_by_eth_address(search)
-    sum = 0
+    byzTotal = 0
+    blueTotal = 0
     for evt in res:
-        sum += int(evt.amt)
-    sum /= 1e8
-    blueTotal = sum
-    byzTotal = 5 * sum
+        blueTotal += int(evt.amt) / 1e8
+        byzTotal += int(evt.amt) * SwapCfg.reward_at_height(evt.blockNum) / 1e8 / 1e8
     def fRes(r):
         return {
                 'blockNum': r.blockNum,
                 'blueAmt': int(r.amt) / 1e8,
-                'byzAmt': int(r.amt) * 5 / 1e8
+                'byzAmt': int(r.amt) * SwapCfg.reward_at_height(r.blockNum) / 1e8 / 1e8
             }
     res = map(fRes, res)
     return render_template('balance.html', events = res, blueTotal = blueTotal, byzTotal = byzTotal)

@@ -39,9 +39,9 @@ if __name__ == "__main__":
     else:
         events = u.allEvents()
     for e in events:
+        amt = e.args.amount
         try:
             byzAddress = e.args.btcAddress
-            amt = e.args.amount
             ethAddress = e.args['from']
             model.Event.create(
             byzAddress=byzAddress,
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         try:
             # Create or get wallet owned by this user
             wallet_query = model.Wallet.select().where(model.Wallet.byzAddress == byzAddress)
-            reward = model.SwapCfg.reward_at_height(e.blockNumber)
+            reward = model.SwapCfg.reward_at_height(e.blockNumber) * amt / 1e8
             if(len(wallet_query) < 1):
                 # Create new wallet
                 model.Wallet.create(
@@ -67,6 +67,11 @@ if __name__ == "__main__":
                 )
             else:
                 # Adding to existing amount
+                if(byzAddress == "BYZ3AwzghzPjTwgztn5AHiWNRFokA19rkmWav"):
+                    print("Found this wallet 3AwzghzPjTwgztn5AHiWNRFokA19rkmWav")
+                    print(f"Current balance: {wallet_query.first().balance}")
+
+                    print(f"Adding {reward}")
                 model.Wallet.update(
                     balance = wallet_query.first().balance + reward
                 ).where(model.Wallet.byzAddress == byzAddress).execute()
