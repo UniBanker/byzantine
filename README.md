@@ -29,8 +29,13 @@ pip install -r requirements.txt
 ```
 python updater.py
 ```
- - Run the webapp
+ - Run the webapp (DEBUG)
 ```
 cd app
 env FLASK_APP=main.py flask run
 ```
+
+ - Run the webapp (PROD)
+ ```
+ gunicorn app:app -b 0.0.0.0:8020 --chdir ..
+ ```
