@@ -27,8 +27,6 @@ parsimonious==0.8.1
 peewee==3.10.0
 protobuf==3.9.1
 pycryptodome==3.9.0
-pypiwin32==223
-pywin32==224
 requests==2.22.0
 rlp==1.1.0
 six==1.12.0
