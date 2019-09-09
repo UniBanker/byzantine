@@ -3,8 +3,10 @@ from functools import reduce
 from model import Event, Wallet, SwapCfg
 import json
 from playhouse.shortcuts import model_to_dict
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Website
 @app.route('/')

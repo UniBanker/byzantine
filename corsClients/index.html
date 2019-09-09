@@ -1,0 +1,11 @@
+<script>
+
+//fetch('https://api.byz.network/api/allWallets')
+fetch('http://me:5000/api/allWallets')
+.then((x,y) => {
+    console.log(x); console.log(y);
+})
+.catch((err) => {
+    console.log(err);
+})
+</script>
